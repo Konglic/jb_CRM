@@ -224,7 +224,7 @@ CREATE TABLE orderdetail
 	detailid   NUMBER(5) NOT NULL,    --  明细ID 
 	orderid    NUMBER(5) NOT NULL,    --  订单编号 
 	productid  NUMBER(5) NOT NULL,    --  产品编号 
-	number     NUMBER(5) NOT NULL    --  数量 
+	ordernumber NUMBER(5) NOT NULL    --  数量 
 )
 ;
 
@@ -236,7 +236,7 @@ COMMENT ON COLUMN orderdetail.orderid    IS '订单编号'
 ;
 COMMENT ON COLUMN orderdetail.productid  IS '产品编号'
 ;
-COMMENT ON COLUMN orderdetail.number     IS '数量'
+COMMENT ON COLUMN orderdetail.ordernumber  IS '数量'
 ;
 
 CREATE TABLE orderstatus
@@ -360,8 +360,12 @@ ALTER TABLE customer ADD CONSTRAINT FK_c_g
 	FOREIGN KEY (gradeid) REFERENCES grade (gradeid)
 ;
 
+ALTER TABLE customer ADD CONSTRAINT FK_s_s 
+	FOREIGN KEY (satisfactionid) REFERENCES satiscredibility (satisid)
+;
+
 ALTER TABLE customer ADD CONSTRAINT FK_c_s 
-	FOREIGN KEY (credibilityid, satisfactionid) REFERENCES satiscredibility (satisid)
+	FOREIGN KEY (credibilityid) REFERENCES satiscredibility (satisid)
 ;
 
 ALTER TABLE customerloss ADD CONSTRAINT FK_c_c 

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-2.5.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+           http://www.springframework.org/schema/tx 
+           http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+           http://cxf.apache.org/jaxws
+           http://cxf.apache.org/schemas/jaxws.xsd" >
+
+    <!-- 导入cxf配置文件 -->
+    <import resource="classpath:META-INF/cxf/cxf.xml"/>
+    <import resource="classpath:META-INF/cxf/cxf-extension-soap.xml"/>
+    <import resource="classpath:META-INF/cxf/cxf-servlet.xml"/> 
+	<!-- 导入cxf-server.xml和cxf-client.xml -->
+	<import resource="classpath:cxf-server.xml"/> 
+	<import resource="classpath:cxf-client.xml"/> 
+    <!-- 使用注解 -->
+	<context:annotation-config />
+	<!-- 检测cn.com.crm包下的类，由annotation生成bean -->
+	<context:component-scan base-package="cn.com.crm" />
+	<!-- 读取根路径下的配置文件jdbc.properties -->
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<value>classpath:jdbc.properties</value>
+		</property>
+	</bean>
+    <!-- 配置数据源 -->
+	<bean id="dataSource" destroy-method="close" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+	    <!-- 配置SessionFactory -->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+       <property name="dataSource" ref="dataSource"/>
+       <!-- 扫描cn.com.crm.entity包中的所有标注@Entity实体 -->
+       <property name="packagesToScan">
+          <list>
+             <value>cn.com.crm.entity</value>
+          </list>
+       </property>
+       <property name="hibernateProperties">
+		  <props>
+			<prop key="hibernate.show_sql">true</prop>
+			<prop key="hibernate.format_sql">true</prop>
+		  </props>
+        </property>
+    </bean>
+   <!-- 配置hibernateTemplate -->
+   <bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate">
+       <property name="sessionFactory" ref="sessionFactory"/>
+   </bean>
+   <!-- 配置hibernate事务管理类 -->
+   <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+	   <property name="sessionFactory" ref="sessionFactory" />
+   </bean>
+
+   <aop:config>
+		<aop:pointcut id="bussinessService"
+			expression="execution(public * cn.com.crm.service.impl.*.*(..))" />
+		<aop:advisor pointcut-ref="bussinessService"
+			advice-ref="txAdvice" />
+   </aop:config>
+	
+   <tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+		    <tx:method name="query*" read-only="true"/>
+		    <tx:method name="add*" propagation="REQUIRED"/>
+			<tx:method name="update*" propagation="REQUIRED"/>
+			<tx:method name="delete*" propagation="REQUIRED"/>
+		</tx:attributes>
+   </tx:advice>
+   
+</beans>
